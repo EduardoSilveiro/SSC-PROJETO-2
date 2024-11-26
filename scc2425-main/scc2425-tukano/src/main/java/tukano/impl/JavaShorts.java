@@ -29,7 +29,7 @@ public class JavaShorts implements Shorts {
 	private static Logger Log = Logger.getLogger(JavaShorts.class.getName());
 	
 	private static Shorts instance;
-	
+	private static final String BLOBS_URL ="https://scc2425.blob.core.windows.net/images";
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
 			instance = new JavaShorts();
