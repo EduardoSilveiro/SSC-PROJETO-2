@@ -32,6 +32,8 @@ public class JavaBlobs implements Blobs {
 		storage = new FilesystemStorage();
 		baseURI = String.format("%s/%s/", TukanoRestServer.serverURI, Blobs.NAME);
 	}
+
+
 	
 	@Override
 	public Result<Void> upload(String blobId, byte[] bytes, String token) {
