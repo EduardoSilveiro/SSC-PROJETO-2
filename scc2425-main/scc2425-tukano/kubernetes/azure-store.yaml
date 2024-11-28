@@ -1,8 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tukano-deployment
-  namespace: default
+  name: tukano
   labels:
     app: tukano
 spec:
@@ -16,30 +15,31 @@ spec:
         app: tukano
     spec:
       containers:
-        - name: tukano-container
-          image: t1santos/tukanoimage:latest  # Replace with your actual Docker image
+        - name: tukano-app
+          image: t1santos/tukanoimage
           ports:
             - containerPort: 8080
-          resources:
-            requests:
-              memory: "512Mi"
-              cpu: "0.5"
-            limits:
-              memory: "1Gi"
-              cpu: "1"
+          env:
+            - name: DB_HOST
+              value: "postgresql.default.svc.cluster.local" # PostgreSQL service DNS
+            - name: DB_PORT
+              value: "5432"
+            - name: DB_USER
+              value: "myuser"
+            - name: DB_PASSWORD
+              value: "mypassword"
+            - name: DB_NAME
+              value: "mydatabase"
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: tukano-service
-  namespace: default
-  labels:
-    app: tukano
 spec:
-  type: LoadBalancer
-  ports:
-    - port: 8080
-      targetPort: 8080
-      protocol: TCP
   selector:
     app: tukano
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer

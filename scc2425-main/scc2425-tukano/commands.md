@@ -2,9 +2,11 @@ Docker
 * create image:
     -   docker build -t t1santos/tukanoimage .
 * push image:
-       docker push t1santos/tukanoimage
+  -  docker push t1santos/tukanoimage
+  -   docker run --name my-postgres -e POSTGRES_HOST_AUTH_METHOD=trust -d postgres:15
 * run docker locally:
-  
+  docker run --name my-postgres -e POSTGRES_PASSWORD=your_password -d postgres:15
+
     - docker run --rm -p 8080:8080 t1santos/tukanoimage
 # Azure Docker
 * create cluster:
@@ -25,7 +27,7 @@ Docker
     -  az ad sp create-for-rbac --name http://scc2324-kuber --role Contributor --scope /subscriptions/<ID_OF_YOUR_SUBSCRIPTION>
        az ad sp create-for-rbac --name http://scc2425-t1santos --role Contributor --scope /subscriptions/4470b7dc-d45f-4a3f-aa4d-032931825859
 * create a cluster:
-    - az aks create --resource-group scc2425-container-tukano --name scc2425-cluster-tukano --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal 09dc3e44-3dcc-49c1-9c97-2cb29fa480db --client-secret X9o8Q~Nqn9hEkmtdzjZKjaOAcO3DEfKxt6eL6cAL
+    - az aks create --resource-group scc2425-container-tukano --name scc2425-cluster-tukano --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal  09dc3e44-3dcc-49c1-9c97-2cb29fa480db --client-secret Fbe8Q~eLpGbmzrYR0ybU6.z6DFksf~unm1vS~aQ3
 
 * get credentials:
     - az aks get-credentials --resource-group scc2425-container-tukano --name scc2425-cluster-tukano
@@ -40,7 +42,7 @@ Docker
     - kubectl get pods
 
 * Stream Logs:
-    - kubectl logs -f tukano-deployment-8648b77454-zr5x6
+    - kubectl logs -f tukano-69c897447-5xmqv
 
 * Delete All Objects:
     -  kubectl delete deployments,services,pods --all
