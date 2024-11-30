@@ -1,0 +1,46 @@
+# Maven
+* To compile:
+    - mvn clean compile package
+
+# Docker
+* create image:
+    - docker build -t eduardosilveiro1/tukanoapp .
+
+* push image:
+    - docker push eduardosilveiro1/tukanoapp
+
+docker tag tukanoapp eduardosilveiro1/tukanoapp
+
+* run docker locally:
+    - docker run --rm -p 8080:8080 eduardosilveiro1/tukanoapp
+
+# Azure Docker
+* create cluster:
+    - az group create --name scc2425-container-tukano --location germanywestcentral
+
+* start container:
+    - az container create --resource-group scc2425-container-tukano --name scc2425-container-tukano --image eduardosilveiro1/tukanoapp --ports 8080 --dns-name-label scc2425-eduardosilveiro1
+
+* delete container:
+    - az container delete --resource-group scc2425-container-tukano --name scc2425-container-tukano
+
+* logs:
+    - az container logs --resource-group scc2324-cluster-60182-westus --name scc2324-tests-westus
+
+
+# Kubernetes
+* create a service:
+        az ad sp create-for-rbac --name http://scc2425-eduardosilveiro1 --role Contributor --scope /subscriptions/f28c00ca-bd86-4680-8de2-2aecd2f77850
+* create a cluster:
+    - az aks create --resource-group scc2425-container-tukano --name scc2425-cluster-tukano --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal  ea3cb7b2-f2a2-41d8-83d8-89ea0e38c7f9 --client-secret oE78Q~4urRl9O18QDhjsiWDEJH2k.xeoCycGqbyq
+
+* get credentials:
+    - az aks get-credentials --resource-group scc2425-container-tukano --name scc2425-cluster-tukano
+
+* deploy file:
+    - kubectl apply -f azure-store.yaml
+
+
+kubectl create secret generic azure-secret \
+  --from-literal=azurestorageaccountname=<account-name> \
+  --from-literal=azurestorageaccountkey=<account-key>

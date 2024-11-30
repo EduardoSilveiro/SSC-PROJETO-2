@@ -1,3 +1,4 @@
+# Deployment da aplicação Tukano
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,7 +17,7 @@ spec:
     spec:
       containers:
         - name: tukano-app
-          image: t1santos/tukanoimage
+          image: eduardosilveiro1/tukanoapp
           ports:
             - containerPort: 8080
           env:
@@ -30,14 +31,17 @@ spec:
               value: "mypassword"
             - name: DB_NAME
               value: "mydatabase"
-          volumeMounts:  # Correctly specify volumes to mount
+          volumeMounts:
             - mountPath: "/mnt/vol"
               name: mediavolume
-      volumes:  # Define volumes at the pod spec level
+      volumes:
         - name: mediavolume
           persistentVolumeClaim:
             claimName: azure-managed-disk
+
 ---
+
+# Serviço para a aplicação Tukano
 apiVersion: v1
 kind: Service
 metadata:
@@ -50,7 +54,10 @@ spec:
       port: 80
       targetPort: 8080
   type: LoadBalancer
+
 ---
+
+# PersistentVolumeClaim para armazenamento da aplicação Tukano
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -64,17 +71,57 @@ spec:
       storage: 1Gi
 
 ---
-apiVersion: v1
-kind: PersistentVolume
+
+# Deployment para o PostgreSQL
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: azure-managed-pv
+  name: postgresql
+  labels:
+    app: postgresql
 spec:
-  capacity:
-    storage: 1Gi
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: azurefile
-  azureFile:
-    secretName: azure-secret
-    shareName: tukano-share
-    readOnly: false
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgresql
+  template:
+    metadata:
+      labels:
+        app: postgresql
+    spec:
+      containers:
+        - name: postgresql
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "myuser"
+            - name: POSTGRES_PASSWORD
+              value: "mypassword"
+            - name: POSTGRES_DB
+              value: "mydatabase"
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-data
+          emptyDir: {}
+
+---
+
+# Serviço para o PostgreSQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgresql
+  labels:
+    app: postgresql
+spec:
+  selector:
+    app: postgresql
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
