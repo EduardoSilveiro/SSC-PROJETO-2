@@ -21,7 +21,7 @@ spec:
             - containerPort: 8080
           env:
             - name: DB_HOST
-              value: "postgresql.default.svc.cluster.local" # PostgreSQL service DNS
+              value: "postgresql.default.svc.cluster.local"
             - name: DB_PORT
               value: "5432"
             - name: DB_USER
@@ -30,6 +30,13 @@ spec:
               value: "mypassword"
             - name: DB_NAME
               value: "mydatabase"
+          volumeMounts:  # Correctly specify volumes to mount
+            - mountPath: "/mnt/vol"
+              name: mediavolume
+      volumes:  # Define volumes at the pod spec level
+        - name: mediavolume
+          persistentVolumeClaim:
+            claimName: azure-managed-disk
 ---
 apiVersion: v1
 kind: Service
@@ -43,3 +50,31 @@ spec:
       port: 80
       targetPort: 8080
   type: LoadBalancer
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: azurefile
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: azure-managed-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: azurefile
+  azureFile:
+    secretName: azure-secret
+    shareName: tukano-share
+    readOnly: false

@@ -24,11 +24,10 @@ Docker
 
 # Kubernetes
 * create a service:
-    -  az ad sp create-for-rbac --name http://scc2324-kuber --role Contributor --scope /subscriptions/<ID_OF_YOUR_SUBSCRIPTION>
-       az ad sp create-for-rbac --name http://scc2425-t1santos --role Contributor --scope /subscriptions/4470b7dc-d45f-4a3f-aa4d-032931825859
+        az ad sp create-for-rbac --name http://scc2425-t1santos --role Contributor --scope /subscriptions/4470b7dc-d45f-4a3f-aa4d-032931825859
 * create a cluster:
-    - az aks create --resource-group scc2425-container-tukano --name scc2425-cluster-tukano --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal  09dc3e44-3dcc-49c1-9c97-2cb29fa480db --client-secret Fbe8Q~eLpGbmzrYR0ybU6.z6DFksf~unm1vS~aQ3
-
+    - az aks create --resource-group scc2425-container-tukano --name scc2425-cluster-tukano --node-vm-size Standard_B2s --generate-ssh-keys --node-count 2 --service-principal  09dc3e44-3dcc-49c1-9c97-2cb29fa480db --client-secret Ogb8Q~2adjZVvHAIaktb989PaocI-GrmQUw3Hdd0
+ 
 * get credentials:
     - az aks get-credentials --resource-group scc2425-container-tukano --name scc2425-cluster-tukano
 
@@ -40,10 +39,10 @@ Docker
 
 * check pods:
     - kubectl get pods
-
+      kubectl delete pod tukano-786b6fbb89-fzcgg
 * Stream Logs:
-    - kubectl logs -f tukano-69c897447-5xmqv
-
+    - kubectl logs -f tukano-786b6fbb89-rwg9v
+      kubectl rollout status deployment/tukano 
 * Delete All Objects:
     -  kubectl delete deployments,services,pods --all
 
@@ -52,4 +51,4 @@ Docker
 
 * Delete Cluster
     - az group delete --resource-group scc2425-container-tukano
-    - 
+     
