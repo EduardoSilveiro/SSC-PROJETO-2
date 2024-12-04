@@ -22,7 +22,7 @@ spec:
             - containerPort: 8080
           env:
             - name: DB_HOST
-              value: "postgresql.default.svc.cluster.local"
+              value: "postgresql"
             - name: DB_PORT
               value: "5432"
             - name: DB_USER

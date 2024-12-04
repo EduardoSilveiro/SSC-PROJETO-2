@@ -3,7 +3,7 @@
 	<session-factory>
 		<!-- JDBC Database connection settings -->
 		<property name="connection.driver_class">org.postgresql.Driver</property>
-		<property name="connection.url">jdbc:postgresql://postgresql.default.svc.cluster.local:5432/mydatabase</property>
+		<property name="connection.url">jdbc:postgresql://postgresql:5432/mydatabase</property>
 		<property name="connection.username">myuser</property>
 		<property name="connection.password">mypassword</property>
 		<!-- JDBC connection pool settings ... using built-in test pool -->
