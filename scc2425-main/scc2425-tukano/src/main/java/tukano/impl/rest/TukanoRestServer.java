@@ -39,6 +39,8 @@ public class TukanoRestServer extends Application {
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
+		Token.setSecret( "superstrongsecretyes" );
+
 
 		//Props.load("azurekeys-region.props");
 		//serverURI = String.format(SERVER_BASE_URI, IP.hostname(), PORT);
