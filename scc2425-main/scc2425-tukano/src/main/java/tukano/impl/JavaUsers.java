@@ -20,9 +20,10 @@ import utils.DB;
 public class JavaUsers implements Users {
 	
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
+	public static boolean CACHE_MODE = Constants.eduardoConst.isCacheActive();
 
 	private static Users instance;
-	
+	static RedisCache cache = RedisCache.getInstance();
 	synchronized public static Users getInstance() {
 		if( instance == null )
 			instance = new JavaUsers();
