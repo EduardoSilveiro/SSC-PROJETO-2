@@ -6,13 +6,8 @@
   <component name="ChangeListManager">
     <list default="true" id="564ca806-ed71-4ab6-a94b-faf601476723" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/Token.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/Token.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/rest/TukanoRestServer.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/rest/TukanoRestServer.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/target/classes/tukano/impl/Token.class" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/target/classes/tukano/impl/Token.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/target/classes/tukano/impl/rest/TukanoRestServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/target/classes/tukano/impl/rest/TukanoRestServer.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1.war" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1.war" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1/WEB-INF/classes/tukano/impl/Token.class" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1/WEB-INF/classes/tukano/impl/Token.class" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1/WEB-INF/classes/tukano/impl/rest/TukanoRestServer.class" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/target/tukano-1/WEB-INF/classes/tukano/impl/rest/TukanoRestServer.class" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/kubernetes/azure-store.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/kubernetes/azure-store.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/JavaShorts.java" beforeDir="false" afterPath="$PROJECT_DIR$/scc2425-tukano/src/main/java/tukano/impl/JavaShorts.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

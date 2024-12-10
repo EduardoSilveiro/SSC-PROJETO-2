@@ -1,4 +1,3 @@
-# Deployment da aplicação Tukano
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -41,7 +40,6 @@ spec:
 
 ---
 
-# Serviço para a aplicação Tukano
 apiVersion: v1
 kind: Service
 metadata:
@@ -57,22 +55,39 @@ spec:
 
 ---
 
-# PersistentVolumeClaim para armazenamento da aplicação Tukano
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: PersistentVolume
 metadata:
-  name: azure-managed-disk
+  name: postgres-pv
+  labels:
+    app: postgresql
 spec:
+  capacity:
+    storage: 1Gi
   accessModes:
     - ReadWriteOnce
-  storageClassName: azurefile
-  resources:
-    requests:
-      storage: 1Gi
+  storageClassName: manual
+  hostPath:
+    path: "/mnt/data/postgresql"
 
 ---
 
-# Deployment para o PostgreSQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  labels:
+    app: postgresql
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+
+---
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -104,13 +119,14 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+
       volumes:
         - name: postgres-data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: postgres-pvc
 
 ---
 
-# Serviço para o PostgreSQL
 apiVersion: v1
 kind: Service
 metadata:
