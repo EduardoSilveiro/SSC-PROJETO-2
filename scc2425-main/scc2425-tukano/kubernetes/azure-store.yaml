@@ -21,6 +21,10 @@ spec:
           ports:
             - containerPort: 8080
           env:
+            - name: BLOBS_PATH
+              value: "/mnt/vol"
+            - name: CACHE_ACTIVE
+              value: "true"
             - name: DB_HOST
               value: "postgresql"
             - name: DB_PORT
@@ -125,3 +129,73 @@ spec:
       port: 5432
       targetPort: 5432
   type: ClusterIP
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-service
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis-container
+          image: redis:latest
+          ports:
+            - containerPort: 6380  # Redis is configured to run on port 6380
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "500m"
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+          env:
+            - name: REDIS_HOST
+              value: "redis-service"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+spec:
+  selector:
+    app: redis
+  ports:
+    - protocol: TCP
+      port: 6380  # Expose Redis on port 6380, as per your configuration
+      targetPort: 6380
+  type: ClusterIP
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: standard
+
+

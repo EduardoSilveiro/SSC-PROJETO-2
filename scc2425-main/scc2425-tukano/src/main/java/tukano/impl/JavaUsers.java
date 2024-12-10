@@ -7,11 +7,12 @@ import static tukano.api.Result.errorOrValue;
 import static tukano.api.Result.ok;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
-
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
-
+import tukano.srv.Authentication;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
@@ -20,10 +21,11 @@ import utils.DB;
 public class JavaUsers implements Users {
 	
 	private static Logger Log = Logger.getLogger(JavaUsers.class.getName());
-	public static boolean CACHE_MODE = Constants.eduardoConst.isCacheActive();
+
+	private static final boolean isCacheActive = Boolean.parseBoolean(System.getenv("CACHE_ACTIVE"));
 
 	private static Users instance;
-	static RedisCache cache = RedisCache.getInstance();
+
 	synchronized public static Users getInstance() {
 		if( instance == null )
 			instance = new JavaUsers();
@@ -36,20 +38,53 @@ public class JavaUsers implements Users {
 	public Result<String> createUser(User user) {
 		Log.info(() -> format("createUser : %s\n", user));
 
-		if( badUserInfo( user ) )
-				return error(BAD_REQUEST);
+		if (badUserInfo(user)) {
+			return error(BAD_REQUEST);
+		}
 
-		return errorOrValue( DB.insertOne( user), user.getUserId() );
+		// Insert the user into the database
+		Result<String> dbResult = errorOrValue(DB.insertOne(user), user.getUserId());
+		if (!dbResult.isOK()) {
+			return dbResult; // Return any error from the database operation
+		}
+
+		// If cache is active, log in the user
+		if (isCacheActive) {
+//			Authentication auth = new Authentication();
+//			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
+//
+//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+//				return error(BAD_REQUEST, "Failed to log in after user creation");
+//			}
+		}
+
+		return ok(user.getUserId());
 	}
 
 	@Override
 	public Result<User> getUser(String userId, String pwd) {
-		Log.info( () -> format("getUser : userId = %s, pwd = %s\n", userId, pwd));
+		Log.info(() -> format("getUser : userId = %s, pwd = %s\n", userId, pwd));
 
-		if (userId == null)
+		if (userId == null) {
 			return error(BAD_REQUEST);
-		
-		return validatedUserOrError( DB.getOne( userId, User.class), pwd);
+		}
+
+		Result<User> dbResult = DB.getOne(userId, User.class);
+		if (!dbResult.isOK() || !dbResult.value().getPwd().equals(pwd)) {
+			return error(FORBIDDEN);
+		}
+
+		// If cache is active, log in the user
+		if (isCacheActive) {
+//			Authentication auth = new Authentication();
+//			Response loginResponse = auth.login(userId, pwd);
+//
+//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+//				return error(BAD_REQUEST, "Failed to log in after retrieving user");
+//			}
+		}
+
+		return ok(dbResult.value());
 	}
 
 	@Override
@@ -71,8 +106,7 @@ public class JavaUsers implements Users {
 
 		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
 
-			// Delete user shorts and related info asynchronously in a separate thread
-			Executors.defaultThreadFactory().newThread( () -> {
+ 			Executors.defaultThreadFactory().newThread( () -> {
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();

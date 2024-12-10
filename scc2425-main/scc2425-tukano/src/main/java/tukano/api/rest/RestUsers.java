@@ -1,7 +1,7 @@
 package tukano.api.rest;
 
 import java.util.List;
-
+import jakarta.ws.rs.*;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
@@ -26,34 +26,31 @@ public interface RestUsers {
 	@POST
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	String createUser(@HeaderParam("isCacheActive") boolean isCacheActive,User user);
+	String createUser( User user);
 	
 	
 	@GET
 	@Path("/{" + USER_ID+ "}")
 	@Produces(MediaType.APPLICATION_JSON)
-	User getUser(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd);
+	User getUser(  @PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd);
 	
 	
 	@PUT
 	@Path("/{" + USER_ID+ "}")
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Produces(MediaType.APPLICATION_JSON)
-	User updateUser(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam( USER_ID ) String userId, @QueryParam( PWD ) String pwd, User user);
+	User updateUser( @PathParam( USER_ID ) String userId, @QueryParam( PWD ) String pwd, User user);
 	
 	
 	@DELETE
 	@Path("/{" + USER_ID+ "}")
 	@Produces(MediaType.APPLICATION_JSON)
-	User deleteUser(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId, @QueryParam(PWD) String pwd);
+	User deleteUser( @PathParam(USER_ID) String userId, @QueryParam(PWD) String pwd);
 	
 	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	List<User> searchUsers(@HeaderParam("isCacheActive") boolean isCacheActive,@QueryParam(QUERY) String pattern);
+	List<User> searchUsers( @QueryParam(QUERY) String pattern);
 
-	@POST
-	@Path(LOGIN + "/{" + USER_ID+ "}" )
-	@Consumes(MediaType.APPLICATION_JSON)
-	public Response login(@PathParam(USER_ID) String userId, @QueryParam(PWD) String pwd);
+
 }

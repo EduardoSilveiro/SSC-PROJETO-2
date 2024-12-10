@@ -12,31 +12,34 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import tukano.api.Short;
-
+import jakarta.ws.rs.*;
+import jakarta.ws.rs.core.Cookie;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.Response;
 @Path(RestShorts.PATH)
 public interface RestShorts {
 	String PATH = "/shorts";
-	
+
 	String USER_ID = "userId";
 	String USER_ID1 = "userId1";
 	String USER_ID2 = "userId2";
 	String SHORT_ID = "shortId";
-	
+
 	String PWD = "pwd";
 	String FEED = "/feed";
 	String TOKEN = "token";
 	String LIKES = "/likes";
 	String SHORTS = "/shorts";
 	String FOLLOWERS = "/followers";
-	
+
 	@POST
 	@Path("/{" + USER_ID + "}")
 	@Produces(MediaType.APPLICATION_JSON)
-	Short createShort(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
+	Short createShort(@PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
 
 	@DELETE
 	@Path("/{" + SHORT_ID + "}")
-	void deleteShort(@HeaderParam("isCacheActive") boolean isCacheActive,@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(SHORT_ID) String shortId, @QueryParam(PWD) String password);
+	void deleteShort(@PathParam(SHORT_ID) String shortId, @QueryParam(PWD) String password);
 
 	@GET
 	@Path("/{" + SHORT_ID + "}" )
@@ -46,35 +49,35 @@ public interface RestShorts {
 	@GET
 	@Path("/{" + USER_ID + "}" + SHORTS )
 	@Produces(MediaType.APPLICATION_JSON)
-	List<String> getShorts(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId);
+	List<String> getShorts(@PathParam(USER_ID) String userId);
 
 	@POST
 	@Path("/{" + USER_ID1 + "}/{" + USER_ID2 + "}" + FOLLOWERS )
 	@Consumes(MediaType.APPLICATION_JSON)
-	void follow(@PathParam(@HeaderParam("isCacheActive") boolean isCacheActive,USER_ID1) String userId1, @PathParam(USER_ID2) String userId2, boolean isFollowing, @QueryParam(PWD) String password);
+	void follow(@PathParam(USER_ID1) String userId1, @PathParam(USER_ID2) String userId2, boolean isFollowing, @QueryParam(PWD) String password);
 
 	@GET
 	@Path("/{" + USER_ID + "}" + FOLLOWERS )
 	@Produces(MediaType.APPLICATION_JSON)
-	List<String> followers(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
+	List<String> followers(@PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
 
 	@POST
 	@Path("/{" + SHORT_ID + "}/{" + USER_ID + "}" + LIKES )
 	@Consumes(MediaType.APPLICATION_JSON)
-	void like(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(SHORT_ID) String shortId, @PathParam(USER_ID) String userId, boolean isLiked,  @QueryParam(PWD) String password);
+	void like(@PathParam(SHORT_ID) String shortId, @PathParam(USER_ID) String userId, boolean isLiked,  @QueryParam(PWD) String password);
 
 	@GET
 	@Path("/{" + SHORT_ID + "}" + LIKES )
 	@Produces(MediaType.APPLICATION_JSON)
-	List<String> likes(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(SHORT_ID) String shortId, @QueryParam(PWD) String password);
+	List<String> likes(@PathParam(SHORT_ID) String shortId, @QueryParam(PWD) String password);
 
 	@GET
 	@Path("/{" + USER_ID + "}" + FEED )
 	@Produces(MediaType.APPLICATION_JSON)
-	List<String> getFeed(@HeaderParam("isCacheActive") boolean isCacheActive, @PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
-	
+	List<String> getFeed( @PathParam(USER_ID) String userId, @QueryParam(PWD) String password);
+
 	@DELETE
 	@Path("/{" + USER_ID + "}" + SHORTS)
-	void deleteAllShorts(@HeaderParam("isCacheActive") boolean isCacheActive,@PathParam(USER_ID) String userId, @QueryParam(PWD) String password, @QueryParam(TOKEN) String token);
+	void deleteAllShorts(@PathParam(USER_ID) String userId, @QueryParam(PWD) String password, @QueryParam(TOKEN) String token);
 
 }

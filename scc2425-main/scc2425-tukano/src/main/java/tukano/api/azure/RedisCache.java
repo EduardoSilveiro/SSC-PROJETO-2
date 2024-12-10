@@ -9,8 +9,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import utils.Constants;
 import utils.Session;
 public class RedisCache {
-    private static final String RedisHostname = Constants.eduardoConst.getRedisHostname();
-    private static final String RedisKey = Constants.eduardoConst.getRedisKey();
+
 
     private static final int TTL = 60 * 15;
 
@@ -20,6 +19,7 @@ public class RedisCache {
     public synchronized static JedisPool getCachePool() {
         if (instance != null)
             return instance;
+        String redisHost = System.getenv("REDIS_HOST");
         final JedisPoolConfig poolConfig = new JedisPoolConfig();
         poolConfig.setMaxTotal(128);
         poolConfig.setMaxIdle(128);
@@ -29,7 +29,7 @@ public class RedisCache {
         poolConfig.setTestWhileIdle(true);
         poolConfig.setNumTestsPerEvictionRun(3);
         poolConfig.setBlockWhenExhausted(true);
-            instance = new JedisPool(poolConfig, RedisHostname, 6380, 1000, RedisKey, true);
+            instance = new JedisPool(poolConfig, redisHost, 6380, 1000  );
         return instance;
     }
 
