@@ -30,13 +30,15 @@ spec:
               value: "mypassword"
             - name: DB_NAME
               value: "mydatabase"
+            - name: BLOB-PATH
+              value: "/mnt/vol"
           volumeMounts:
             - mountPath: "/mnt/vol"
               name: mediavolume
       volumes:
         - name: mediavolume
           persistentVolumeClaim:
-            claimName: azure-managed-disk
+            claimName: blob-pvc
 
 ---
 
@@ -88,6 +90,38 @@ spec:
 
 ---
 
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: blob-pv
+  labels:
+    app: tukano-blob
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual
+  hostPath:
+    path: "/mnt/data/postgresql"
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: blob-pvc
+  labels:
+    app: tukano-blob
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
