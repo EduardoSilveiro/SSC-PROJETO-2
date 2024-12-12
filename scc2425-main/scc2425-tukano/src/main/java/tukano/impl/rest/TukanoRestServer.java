@@ -10,12 +10,12 @@ import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
-
+import tukano.srv.*;
 import tukano.impl.Token;
 import utils.Args;
 import utils.IP;
 import utils.Props;
-
+import tukano.srv.auth.*;
 
 public class TukanoRestServer extends Application {
 	final private static Logger Log = Logger.getLogger(TukanoRestServer.class.getName());
@@ -39,6 +39,11 @@ public class TukanoRestServer extends Application {
 		resources.add(RestBlobsResource.class);
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
+		resources.add(ControlResource.class);
+
+		resources.add(RequestCookiesFilter.class);
+		resources.add(RequestCookiesCleanupFilter.class);
+		resources.add(Authentication.class);
 		Token.setSecret( "superstrongsecretyes" );
 
 
