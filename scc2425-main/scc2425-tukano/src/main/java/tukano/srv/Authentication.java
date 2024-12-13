@@ -17,23 +17,26 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 
+import tukano.api.rest.RestUsers;
 import tukano.srv.auth.RequestCookies;
 import tukano.api.azure.RedisCache;
 import utils.Session;
 
-@Path(Authentication.PATH)
+@Path(RestUsers.PATH)
 public class Authentication {
 	static final String PATH = "login";
-	static final String USER = "username";
-	static final String PWD = "password";
+	String PWD = "pwd";
+	String QUERY = "query";
+	String USER_ID = "userId";
 	static final String COOKIE_KEY = "scc:session";
 	static final String LOGIN_PAGE = "login.html";
 	private static final int MAX_COOKIE_AGE = 3600;
 	static final String REDIRECT_TO_AFTER_LOGIN = "/ctrl/version";
 	static RedisCache cache = RedisCache.getInstance();
 
-	@POST
-	public Response login(@FormParam(USER) String user, @FormParam(PWD) String password) {
+	@Path("/{" + USER_ID+ "}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response login( @PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd) {
 		System.out.println("user: " + user + " pwd:" + password);
 		boolean pwdOk = true; // replace with code to check user password
 		if (pwdOk) {

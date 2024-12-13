@@ -86,6 +86,38 @@ public class JavaUsers implements Users {
 
 		return ok(dbResult.value());
 	}
+	@Override
+	public Result<Object> login(String userId, String pwd) {
+		Log.info(() -> format("login : userId = %s, pwd = %s\n", userId, pwd));
+
+		// Validate input parameters
+		if (userId == null || pwd == null) {
+			return error(BAD_REQUEST );
+		}
+
+		// Check if user credentials are valid
+		Result<User> userResult = DB.getOne(userId, User.class);
+		if (!userResult.isOK() || !userResult.value().getPwd().equals(pwd)) {
+			return error(FORBIDDEN );
+		}
+		if (isCacheActive) {
+		// Perform login through the Authentication class
+		Authentication auth = new Authentication();
+		try {
+			Response loginResponse = auth.login(userId, pwd);
+
+			// Check if login was successful
+			if (loginResponse.getStatus() == Response.Status.SEE_OTHER.getStatusCode()) {
+				return ok(loginResponse);
+			} else {
+				return error(BAD_REQUEST );
+			}
+		} catch (Exception e) {
+			Log.severe(() -> format("Error during login: %s", e.getMessage()));
+			return error(BAD_REQUEST );
+		}
+		} else return error(FORBIDDEN );
+	}
 
 	@Override
 	public Result<User> updateUser(String userId, String pwd, User other) {
