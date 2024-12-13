@@ -21,14 +21,22 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.POST;
 
 
+import tukano.api.Blobs;
+import tukano.api.Result;
+import tukano.api.Short;
+import tukano.api.User;
 import tukano.api.rest.RestUsers;
+import tukano.impl.JavaUsers;
+import tukano.impl.rest.TukanoRestServer;
 import tukano.srv.auth.RequestCookies;
 import tukano.api.azure.RedisCache;
+import utils.DB;
 import utils.JSON;
 import utils.Session;
 
+import static java.lang.String.format;
+import static tukano.api.Result.*;
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static tukano.api.Result.error;
 
 @Path(Authentication.PATH)
 public class Authentication {
@@ -48,8 +56,10 @@ public class Authentication {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response login( @PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd) {
 		if(isCacheActive) {
-			boolean pwdOk = true;
-			if (pwdOk) {
+			var res = okUser(userId, pwd);
+			if (res.isOK()){
+				boolean pwdOk = true;
+
 				String uid = UUID.randomUUID().toString();
 				var cookie = new NewCookie.Builder(COOKIE_KEY)
 						.value(uid)
@@ -62,17 +72,16 @@ public class Authentication {
 
 				cache.putSession(new Session(uid, userId));
 
-				return Response.seeOther(URI.create(REDIRECT_TO_AFTER_LOGIN))
+				return Response.ok("login")
 						.cookie(cookie)
 						.build();
-			} else {
-				throw new NotAuthorizedException("Incorrect login");
 			}
-		}
-		throw new NotAuthorizedException("No session initializeddddd");
+	}
+		throw new NotAuthorizedException("No session initialized");
 	}
 
 	@GET
+	@Path("/html")
 	@Produces(MediaType.TEXT_HTML)
 	public String login() {
 		try {
@@ -86,7 +95,7 @@ public class Authentication {
 	@GET
 	@Path("/{" + USER_ID+ "}")
 	@Produces(MediaType.APPLICATION_JSON)
-	public String validateLogin(String userId) {
+	public String validateLogin(@PathParam(USER_ID) String userId) {
 		try {
 			var session = validateSession(userId);
 			return JSON.encode(userId);
@@ -97,6 +106,9 @@ public class Authentication {
 	static public Session validateSession(String userId) throws NotAuthorizedException {
 		var cookies = RequestCookies.get();
 		return validateSession(cookies.get(COOKIE_KEY), userId);
+	}
+	protected Result<User> okUser(String userId, String pwd) {
+		return JavaUsers.getInstance().getUser(userId, pwd);
 	}
 
 	static public Session validateSession(Cookie cookie, String userId) throws NotAuthorizedException {
