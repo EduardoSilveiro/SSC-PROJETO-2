@@ -18,11 +18,13 @@ import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.PathParam;
+import jakarta.ws.rs.POST;
 
 
 import tukano.api.rest.RestUsers;
 import tukano.srv.auth.RequestCookies;
 import tukano.api.azure.RedisCache;
+import utils.JSON;
 import utils.Session;
 
 import static tukano.api.Result.ErrorCode.BAD_REQUEST;
@@ -41,6 +43,7 @@ public class Authentication {
 	static RedisCache cache = RedisCache.getInstance();
 	private static final boolean isCacheActive = Boolean.parseBoolean(System.getenv("CACHE_ACTIVE"));
 
+	@POST
 	@Path("/{" + USER_ID+ "}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response login( @PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd) {
@@ -80,6 +83,17 @@ public class Authentication {
 		}
 	}
 
+	@GET
+	@Path("/{" + USER_ID+ "}")
+	@Produces(MediaType.APPLICATION_JSON)
+	public String validateLogin(String userId) {
+		try {
+			var session = validateSession(userId);
+			return JSON.encode(userId);
+		} catch (Exception x) {
+			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
+		}
+	}
 	static public Session validateSession(String userId) throws NotAuthorizedException {
 		var cookies = RequestCookies.get();
 		return validateSession(cookies.get(COOKIE_KEY), userId);
