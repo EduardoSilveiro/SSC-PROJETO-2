@@ -13,6 +13,8 @@ import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
+
+import tukano.api.azure.RedisCache;
 import tukano.srv.Authentication;
 import tukano.api.Result;
 import tukano.api.User;
@@ -27,6 +29,7 @@ public class JavaUsers implements Users {
 	private static final boolean isCacheActive = Boolean.parseBoolean(System.getenv("CACHE_ACTIVE"));
 
 	private static Users instance;
+	static RedisCache cache = RedisCache.getInstance();
 
 	synchronized public static Users getInstance() {
 		if( instance == null )
@@ -35,28 +38,36 @@ public class JavaUsers implements Users {
 	}
 	
 	private JavaUsers() {}
-	
+
 	@Override
 	public Result<String> createUser(User user) {
 		Log.info(() -> format("createUser : %s\n", user));
 
 		if (badUserInfo(user)) {
+			Log.warning("Invalid user information provided.");
 			return error(BAD_REQUEST);
 		}
 
 		Result<String> dbResult = errorOrValue(DB.insertOne(user), user.getUserId());
 		if (!dbResult.isOK()) {
+			Log.warning(() -> format("Failed to create user in DB: %s", dbResult.error()));
 			return dbResult;
 		}
 
-//		if (isCacheActive) {
-//			Authentication auth = new Authentication();
-//			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
-//
-//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-//				return error(BAD_REQUEST);
-//			}
-//		}
+		Log.info(() -> format("User created in DB: %s", user.getUserId()));
+
+		if (isCacheActive) {
+			var cacheKey = "users:" + user.getUserId();
+			cache.setValue(cacheKey, user);
+			Log.info(() -> format("User cached with key: %s", cacheKey));
+
+			var cachedValue = cache.getValue(cacheKey, User.class);
+			if (cachedValue != null) {
+				Log.info(() -> format("User retrieved from cache: %s", cachedValue));
+			} else {
+				Log.warning(() -> format("Failed to retrieve user from cache: %s", cacheKey));
+			}
+		}
 
 		return ok(user.getUserId());
 	}
@@ -65,67 +76,58 @@ public class JavaUsers implements Users {
 	public Result<User> getUser(String userId, String pwd) {
 		Log.info(() -> format("getUser : userId = %s, pwd = %s\n", userId, pwd));
 
-		if (userId == null) {
+		if (userId == null || pwd == null) {
+			Log.warning("Invalid input: userId or password is null.");
 			return error(BAD_REQUEST);
 		}
 
-		Result<User> dbResult = DB.getOne(userId, User.class);
-		if (!dbResult.isOK() || !dbResult.value().getPwd().equals(pwd)) {
-			return error(FORBIDDEN);
+		if (!isCacheActive) {
+			Result<User> dbResult = DB.getOne(userId, User.class);
+			if (!dbResult.isOK()) {
+				Log.warning(() -> format("User not found in DB: %s", userId));
+				return error(FORBIDDEN);
+			}
+
+			User dbUser = dbResult.value();
+			if (!dbUser.getPwd().equals(pwd)) {
+				Log.warning(() -> format("Password mismatch for user: %s", userId));
+				return error(FORBIDDEN);
+			}
+
+			Log.info(() -> format("User found in DB: %s", userId));
+			return ok(dbUser);
+		} else {
+
+			var cacheKey = "users:" + userId;
+			User cachedUser = cache.getValue(cacheKey, User.class);
+
+			if (cachedUser != null) {
+				Log.info(() -> format("User found in cache: %s", userId));
+				if (cachedUser.getPwd().equals(pwd)) {
+					return ok(cachedUser);
+				} else {
+					Log.warning(() -> format("Password mismatch for cached user: %s", userId));
+					return error(FORBIDDEN);
+				}
+			}
+
+			Result<User> dbResult = DB.getOne(userId, User.class);
+			if (!dbResult.isOK()) {
+				Log.warning(() -> format("User not found in DB: %s", userId));
+				return error(FORBIDDEN);
+			}
+
+			User dbUser = dbResult.value();
+			if (!dbUser.getPwd().equals(pwd)) {
+				Log.warning(() -> format("Password mismatch for user: %s", userId));
+				return error(FORBIDDEN);
+			}
+
+			cache.setValue(cacheKey, dbUser);
+			Log.info(() -> format("User cached after DB query: %s", userId));
+			return ok(dbUser);
 		}
-
-//		if (isCacheActive) {
-////			Authentication auth = new Authentication();
-////			Response loginResponse = auth.login(userId, pwd);
-////
-////			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-////				return error(BAD_REQUEST);
-////			}
-//			Session response = validateSession(userId);
-//			Log.info("Sessionnnnnnnnnnnnnnnnnnnnn: "+  response);
-//			if (response.user().equals(dbResult.value())) {
-//				ok(dbResult.value());
-//
-//			}
-//			return  error(BAD_REQUEST);
-
-
-
-		return ok(dbResult.value());
 	}
-
-//	public Result<Object> login(String userId, String pwd) {
-//		Log.info(() -> format("login : userId = %s, pwd = %s\n", userId, pwd));
-//
-//		// Validate input parameters
-//		if (userId == null || pwd == null) {
-//			return error(BAD_REQUEST );
-//		}
-//
-//		// Check if user credentials are valid
-//		Result<User> userResult = DB.getOne(userId, User.class);
-//		if (!userResult.isOK() || !userResult.value().getPwd().equals(pwd)) {
-//			return error(FORBIDDEN );
-//		}
-//		if (isCacheActive) {
-//		// Perform login through the Authentication class
-//		Authentication auth = new Authentication();
-//		try {
-//			Response loginResponse = auth.login(userId, pwd);
-//
-//			// Check if login was successful
-//			if (loginResponse.getStatus() == Response.Status.SEE_OTHER.getStatusCode()) {
-//				return ok(loginResponse);
-//			} else {
-//				return error(BAD_REQUEST );
-//			}
-//		} catch (Exception e) {
-//			Log.severe(() -> format("Error during login: %s", e.getMessage()));
-//			return error(BAD_REQUEST );
-//		}
-//		} else return error(FORBIDDEN );
-//	}
-
 	@Override
 	public Result<User> updateUser(String userId, String pwd, User other) {
 		Log.info(() -> format("updateUser : userId = %s, pwd = %s, user: %s\n", userId, pwd, other));
@@ -149,7 +151,7 @@ public class JavaUsers implements Users {
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 			}).start();
-			
+
 			return DB.deleteOne( user);
 		});
 	}

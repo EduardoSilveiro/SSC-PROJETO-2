@@ -49,12 +49,11 @@ public class JavaBlobs implements Blobs {
 	public Result<Void> upload(String blobId, byte[] bytes, String token ) {
 		Log.info(() -> format("upload : blobId = %s, token = %s, isCacheActive = %b\n", blobId, token ));
 
-		// Validate session if cache is active
 //		if (isCacheActive) {
 //			Authentication.validateSession();
+//
 //		}
 
-		// Validate blob ID and token
 		if (!validBlobId(blobId, token)) {
 			return error(FORBIDDEN);
 		}
