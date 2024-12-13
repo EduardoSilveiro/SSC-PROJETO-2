@@ -132,29 +132,83 @@ public class JavaUsers implements Users {
 	public Result<User> updateUser(String userId, String pwd, User other) {
 		Log.info(() -> format("updateUser : userId = %s, pwd = %s, user: %s\n", userId, pwd, other));
 
-		if (badUpdateUserInfo(userId, pwd, other))
+		if (badUpdateUserInfo(userId, pwd, other)) {
+			Log.warning("Invalid input for updateUser: userId, pwd, or other is invalid.");
 			return error(BAD_REQUEST);
+		}
 
-		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other)));
+		if (!isCacheActive) {
+			return errorOrResult(validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
+				Result<User> updateResult = DB.updateOne(user.updateFrom(other));
+				if (updateResult.isOK()) {
+					Log.info(() -> format("User updated in DB: %s", userId));
+				} else {
+					Log.warning(() -> format("Failed to update user in DB: %s", userId));
+				}
+				return updateResult;
+			});
+		} else {
+			var cacheKey = "users:" + userId;
+			User cachedUser = cache.getValue(cacheKey, User.class);
+
+			if (cachedUser != null) {
+				Log.info(() -> format("User found in cache for update: %s", userId));
+				if (!cachedUser.getPwd().equals(pwd)) {
+					Log.warning(() -> format("Password mismatch for cached user: %s", userId));
+					return error(FORBIDDEN);
+				}
+
+				cachedUser.updateFrom(other);
+				cache.setValue(cacheKey, cachedUser);
+				Log.info(() -> format("User updated in cache: %s", userId));
+				Log.info(() -> format("New User Info from cache: %s", cachedUser));
+
+				return  Result.ok(DB.updateOne(cachedUser.updateFrom(other)).value());
+			}
+
+			return errorOrResult(validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
+				Result<User> updateResult = DB.updateOne(user.updateFrom(other));
+				if (updateResult.isOK()) {
+					cache.setValue(cacheKey, updateResult.value());
+					Log.info(() -> format("User updated in DB and cached: %s", userId));
+				} else {
+					Log.warning(() -> format("Failed to update user in DB: %s", userId));
+				}
+				return updateResult;
+			});
+		}
 	}
+
 
 	@Override
 	public Result<User> deleteUser(String userId, String pwd) {
 		Log.info(() -> format("deleteUser : userId = %s, pwd = %s\n", userId, pwd));
 
-		if (userId == null || pwd == null )
+		if (userId == null || pwd == null) {
+			Log.warning("Invalid input: userId or pwd is null");
 			return error(BAD_REQUEST);
+		}
 
-		return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
+		return errorOrResult(validatedUserOrError(DB.getOne(userId, User.class), pwd), user -> {
+			var cacheKey = "users:" + userId;
 
- 			Executors.defaultThreadFactory().newThread( () -> {
+			if (isCacheActive) {
+				Log.info(() -> format("Removing user %s from cache.", userId));
+				cache.delete(cacheKey);
+			}
+
+			Executors.defaultThreadFactory().newThread(() -> {
+				Log.info(() -> format("Starting deletion for user: %s", userId));
 				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
+				Log.info(() -> format("Completed deletion for user: %s", userId));
 			}).start();
 
-			return DB.deleteOne( user);
+			Log.info(() -> format("Deleting user %s from the database.", userId));
+			return DB.deleteOne(user);
 		});
 	}
+
 
 	@Override
 	public Result<List<User>> searchUsers(String pattern) {
