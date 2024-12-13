@@ -19,6 +19,7 @@ import tukano.api.Result;
 import tukano.api.Short;
 import tukano.api.Shorts;
 import tukano.api.User;
+import tukano.api.azure.RedisCache;
 import tukano.impl.data.Following;
 import tukano.impl.data.Likes;
 import tukano.impl.rest.TukanoRestServer;
@@ -29,8 +30,9 @@ public class JavaShorts implements Shorts {
 	private static Logger Log = Logger.getLogger(JavaShorts.class.getName());
 	
 	private static Shorts instance;
-	private static String blobName = "blobs"; // mudar para nome correto
-	private static final String BLOBS_URL ="http://scc2425-t1santos.germanywestcentral.azurecontainer.io:8080/blobsimage/rest/blobs";
+	static RedisCache cache = RedisCache.getInstance();
+	private static final boolean isCacheActive = Boolean.parseBoolean(System.getenv("CACHE_ACTIVE"));
+
 	synchronized public static Shorts getInstance() {
 		if( instance == null )
 			instance = new JavaShorts();
@@ -38,54 +40,112 @@ public class JavaShorts implements Shorts {
 	}
 	
 	private JavaShorts() {}
-	
-	
+
+
 	@Override
 	public Result<Short> createShort(String userId, String password) {
 		Log.info(() -> format("createShort : userId = %s, pwd = %s\n", userId, password));
 
-		return errorOrResult( okUser(userId, password), user -> {
+		return errorOrResult(okUser(userId, password), user -> {
 
 			var shortId = format("%s+%s", userId, UUID.randomUUID());
-			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId); 
+			var blobUrl = format("%s/%s/%s", TukanoRestServer.serverURI, Blobs.NAME, shortId);
 			var shrt = new Short(shortId, userId, blobUrl);
 
-			return errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			Result<Short> insertResult = errorOrValue(DB.insertOne(shrt), s -> s.copyWithLikes_And_Token(0));
+			if (insertResult.isOK()) {
+				Log.info(() -> format("Short created successfully: shortId = %s for user %s", shortId, userId));
+			} else {
+				Log.warning(() -> format("Failed to create short: shortId = %s for user %s", shortId, userId));
+			}
+
+			if (isCacheActive) {
+				var cacheKey = "shorts:" + shortId;
+
+				cache.setValue(cacheKey, insertResult.value());
+				Log.info(() -> format("Cache set for shortId: %s", shortId));
+
+				var cachedValue = cache.getValue(cacheKey, Short.class);
+				if (cachedValue != null) {
+					Log.info(() -> format("Short retrieved from cache: %s", cachedValue));
+				} else {
+					Log.warning(() -> format("Failed to retrieve Short from cache: %s", cacheKey));
+				}
+			}
+
+			return insertResult;
 		});
 	}
+
+
 
 	@Override
 	public Result<Short> getShort(String shortId) {
 		Log.info(() -> format("getShort : shortId = %s\n", shortId));
 
-		if( shortId == null )
+		if (shortId == null) {
 			return error(BAD_REQUEST);
+		}
+
+		if (isCacheActive) {
+			var cacheKey = "shorts:" + shortId;
+			Short cachedShort = cache.getValue(cacheKey, Short.class);
+
+			if (cachedShort != null) {
+				Log.info(() -> format("Cached shortId = %s, cached value.", shortId));
+				return ok(cachedShort);
+			}
+			Log.info(() -> format("Cache miss for shortId = %s ", shortId));
+		}
 
 		var query = format("SELECT count(*) FROM Likes l WHERE l.shortId = '%s'", shortId);
 		var likes = DB.sql(query, Long.class);
-		return errorOrValue( getOne(shortId, Short.class), shrt -> shrt.copyWithLikes_And_Token( likes.get(0)));
+
+		Result<Short> dbResult = getOne(shortId, Short.class);
+		if (!dbResult.isOK()) {
+			Log.warning(() -> format("Short not found in DB for shortId = %s", shortId));
+			return dbResult;
+		}
+
+		Short resultShort = dbResult.value().copyWithLikes_And_Token(likes.get(0));
+
+		if (isCacheActive) {
+			cache.setValue("shorts:" + shortId, resultShort);
+			Log.info(() -> format("Cached shortId = %s", shortId));
+		}
+
+		return ok(resultShort);
 	}
 
-	
+
 	@Override
 	public Result<Void> deleteShort(String shortId, String password) {
 		Log.info(() -> format("deleteShort : shortId = %s, pwd = %s\n", shortId, password));
-		
-		return errorOrResult( getShort(shortId), shrt -> {
-			
-			return errorOrResult( okUser( shrt.getOwnerId(), password), user -> {
-				return DB.transaction( hibernate -> {
 
-					hibernate.remove( shrt);
-					
+		return errorOrResult(getShort(shortId), shrt -> {
+
+			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
+				return DB.transaction(hibernate -> {
+
+					hibernate.remove(shrt);
+
 					var query = format("DELETE Likes l WHERE l.shortId = '%s'", shortId);
-					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
-					
-					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get() );
+					hibernate.createNativeQuery(query, Likes.class).executeUpdate();
+					Log.info(() -> format("Likes deleted for shortId = %s", shortId));
+
+					JavaBlobs.getInstance().delete(shrt.getBlobUrl(), Token.get());
+					Log.info(() -> format("Blob deleted for shortId = %s", shortId));
+
+					if (isCacheActive) {
+						var cacheKey = "shorts:" + shortId;
+						cache.delete(cacheKey);
+						Log.info(() -> format("Cache removed for shortId: %s", shortId));
+					}
 				});
-			});	
+			});
 		});
 	}
+
 
 	@Override
 	public Result<List<String>> getShorts(String userId) {

@@ -123,8 +123,6 @@ public class JavaUsers implements Users {
 				return error(FORBIDDEN);
 			}
 
-			cache.setValue(cacheKey, dbUser);
-			Log.info(() -> format("User cached after DB query: %s", userId));
 			return ok(dbUser);
 		}
 	}
