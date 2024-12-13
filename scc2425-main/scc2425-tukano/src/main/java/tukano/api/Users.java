@@ -25,7 +25,7 @@ public interface Users {
 	 */
 	Result<User> getUser(String userId, String pwd);
 
-	Result<Object> login(String userId, String pwd);
+	//Result<Object> login(String userId, String pwd);
 
 	/**
 	 * Modifies the information of a user. Value of null, in any field of the user argument, means the field will remain as unchanged 

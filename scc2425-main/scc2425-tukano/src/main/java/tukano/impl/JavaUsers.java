@@ -49,14 +49,14 @@ public class JavaUsers implements Users {
 			return dbResult;
 		}
 
-		if (isCacheActive) {
-			Authentication auth = new Authentication();
-			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
-
-			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-				return error(BAD_REQUEST);
-			}
-		}
+//		if (isCacheActive) {
+//			Authentication auth = new Authentication();
+//			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
+//
+//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+//				return error(BAD_REQUEST);
+//			}
+//		}
 
 		return ok(user.getUserId());
 	}
@@ -74,57 +74,57 @@ public class JavaUsers implements Users {
 			return error(FORBIDDEN);
 		}
 
-		if (isCacheActive) {
-//			Authentication auth = new Authentication();
-//			Response loginResponse = auth.login(userId, pwd);
+//		if (isCacheActive) {
+////			Authentication auth = new Authentication();
+////			Response loginResponse = auth.login(userId, pwd);
+////
+////			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+////				return error(BAD_REQUEST);
+////			}
+//			Session response = validateSession(userId);
+//			Log.info("Sessionnnnnnnnnnnnnnnnnnnnn: "+  response);
+//			if (response.user().equals(dbResult.value())) {
+//				ok(dbResult.value());
 //
-//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-//				return error(BAD_REQUEST);
 //			}
-			Session response = validateSession(userId);
-			Log.info("Sessionnnnnnnnnnnnnnnnnnnnn: "+  response);
-			if (response.user().equals(dbResult.value())) {
-				ok(dbResult.value());
+//			return  error(BAD_REQUEST);
 
-			}
-			return  error(BAD_REQUEST);
 
-		}
 
 		return ok(dbResult.value());
 	}
-	@Override
-	public Result<Object> login(String userId, String pwd) {
-		Log.info(() -> format("login : userId = %s, pwd = %s\n", userId, pwd));
 
-		// Validate input parameters
-		if (userId == null || pwd == null) {
-			return error(BAD_REQUEST );
-		}
-
-		// Check if user credentials are valid
-		Result<User> userResult = DB.getOne(userId, User.class);
-		if (!userResult.isOK() || !userResult.value().getPwd().equals(pwd)) {
-			return error(FORBIDDEN );
-		}
-		if (isCacheActive) {
-		// Perform login through the Authentication class
-		Authentication auth = new Authentication();
-		try {
-			Response loginResponse = auth.login(userId, pwd);
-
-			// Check if login was successful
-			if (loginResponse.getStatus() == Response.Status.SEE_OTHER.getStatusCode()) {
-				return ok(loginResponse);
-			} else {
-				return error(BAD_REQUEST );
-			}
-		} catch (Exception e) {
-			Log.severe(() -> format("Error during login: %s", e.getMessage()));
-			return error(BAD_REQUEST );
-		}
-		} else return error(FORBIDDEN );
-	}
+//	public Result<Object> login(String userId, String pwd) {
+//		Log.info(() -> format("login : userId = %s, pwd = %s\n", userId, pwd));
+//
+//		// Validate input parameters
+//		if (userId == null || pwd == null) {
+//			return error(BAD_REQUEST );
+//		}
+//
+//		// Check if user credentials are valid
+//		Result<User> userResult = DB.getOne(userId, User.class);
+//		if (!userResult.isOK() || !userResult.value().getPwd().equals(pwd)) {
+//			return error(FORBIDDEN );
+//		}
+//		if (isCacheActive) {
+//		// Perform login through the Authentication class
+//		Authentication auth = new Authentication();
+//		try {
+//			Response loginResponse = auth.login(userId, pwd);
+//
+//			// Check if login was successful
+//			if (loginResponse.getStatus() == Response.Status.SEE_OTHER.getStatusCode()) {
+//				return ok(loginResponse);
+//			} else {
+//				return error(BAD_REQUEST );
+//			}
+//		} catch (Exception e) {
+//			Log.severe(() -> format("Error during login: %s", e.getMessage()));
+//			return error(BAD_REQUEST );
+//		}
+//		} else return error(FORBIDDEN );
+//	}
 
 	@Override
 	public Result<User> updateUser(String userId, String pwd, User other) {

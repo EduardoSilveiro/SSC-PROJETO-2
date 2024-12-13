@@ -16,48 +16,57 @@ import jakarta.ws.rs.core.Cookie;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.NewCookie;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.PathParam;
+
 
 import tukano.api.rest.RestUsers;
 import tukano.srv.auth.RequestCookies;
 import tukano.api.azure.RedisCache;
 import utils.Session;
 
-@Path(RestUsers.PATH)
+import static tukano.api.Result.ErrorCode.BAD_REQUEST;
+import static tukano.api.Result.error;
+
+@Path(Authentication.PATH)
 public class Authentication {
 	static final String PATH = "login";
-	String PWD = "pwd";
-	String QUERY = "query";
-	String USER_ID = "userId";
+	static final String PWD = "pwd";
+	static final String QUERY = "query";
+	static final String USER_ID = "userId";
 	static final String COOKIE_KEY = "scc:session";
 	static final String LOGIN_PAGE = "login.html";
 	private static final int MAX_COOKIE_AGE = 3600;
 	static final String REDIRECT_TO_AFTER_LOGIN = "/tukano-1/rest";
 	static RedisCache cache = RedisCache.getInstance();
+	private static final boolean isCacheActive = Boolean.parseBoolean(System.getenv("CACHE_ACTIVE"));
 
 	@Path("/{" + USER_ID+ "}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response login( @PathParam(USER_ID) String userId, @QueryParam( PWD ) String pwd) {
-		System.out.println("user: " + user + " pwd:" + password);
-		boolean pwdOk = true;
-		if (pwdOk) {
-			String uid = UUID.randomUUID().toString();
-			var cookie = new NewCookie.Builder(COOKIE_KEY)
-					.value(uid)
-					.path("/")
-					.comment("sessionid")
-					.maxAge(MAX_COOKIE_AGE)
-					.secure(false)
-					.httpOnly(true)
-					.build();
+		if(isCacheActive) {
+			boolean pwdOk = true;
+			if (pwdOk) {
+				String uid = UUID.randomUUID().toString();
+				var cookie = new NewCookie.Builder(COOKIE_KEY)
+						.value(uid)
+						.path("/")
+						.comment("sessionid")
+						.maxAge(MAX_COOKIE_AGE)
+						.secure(false)
+						.httpOnly(true)
+						.build();
 
-			cache.putSession(new Session(uid, user));
+				cache.putSession(new Session(uid, userId));
 
-			return Response.seeOther(URI.create(REDIRECT_TO_AFTER_LOGIN))
-					.cookie(cookie)
-					.build();
-		} else {
-			throw new NotAuthorizedException("Incorrect login");
+				return Response.seeOther(URI.create(REDIRECT_TO_AFTER_LOGIN))
+						.cookie(cookie)
+						.build();
+			} else {
+				throw new NotAuthorizedException("Incorrect login");
+			}
 		}
+		throw new NotAuthorizedException("No session initializeddddd");
 	}
 
 	@GET
