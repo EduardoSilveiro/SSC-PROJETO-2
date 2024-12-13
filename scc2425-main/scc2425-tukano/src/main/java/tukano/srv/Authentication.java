@@ -80,20 +80,9 @@ public class Authentication {
 		throw new NotAuthorizedException("No session initialized");
 	}
 
-	@GET
-	@Path("/html")
-	@Produces(MediaType.TEXT_HTML)
-	public String login() {
-		try {
-			var in = getClass().getClassLoader().getResourceAsStream(LOGIN_PAGE);
-			return new String(in.readAllBytes());
-		} catch (Exception x) {
-			throw new WebApplicationException(Status.INTERNAL_SERVER_ERROR);
-		}
-	}
 
 	@GET
-	@Path("/{" + USER_ID+ "}")
+	@Path("/validate/{userId}")
 	@Produces(MediaType.APPLICATION_JSON)
 	public String validateLogin(@PathParam(USER_ID) String userId) {
 		try {
