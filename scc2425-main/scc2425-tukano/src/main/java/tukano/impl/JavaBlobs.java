@@ -76,12 +76,10 @@ public class JavaBlobs implements Blobs {
 	public Result<Void> delete(String blobId, String token  ) {
 		Log.info(() -> format("delete : blobId = %s, token = %s, isCacheActive = %b\n", blobId, token, isCacheActive));
 
-		// Validate session if cache is active
 		if (isCacheActive) {
 			validateSession(  blobId);
 		}
 
-		// Validate blob ID and token
 		if (!validBlobId(blobId, token)) {
 			return error(FORBIDDEN);
 		}
@@ -94,13 +92,11 @@ public class JavaBlobs implements Blobs {
 	public Result<Void> deleteAllBlobs(String userId, String token  ) {
 		Log.info(() -> format("deleteAllBlobs : userId = %s, token = %s, isCacheActive = %b\n", userId, token, isCacheActive));
 
-		// Validate session if cache is active
 		if (isCacheActive) {
 			//Session session = validateSession(sessionCookie, userId);
 
 		}
 
-		// Validate token
 		if (!Token.isValid(token, userId)) {
 			return error(FORBIDDEN);
 		}

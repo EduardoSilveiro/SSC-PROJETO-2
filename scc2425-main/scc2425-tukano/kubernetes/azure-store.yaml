@@ -32,6 +32,11 @@ spec:
               value: "mydatabase"
             - name: BLOB-PATH
               value: "/mnt/vol"
+            - name: CACHE_ACTIVE
+              value: "true"
+            - name: REDIS_HOST
+              value: "redis-service"
+
           volumeMounts:
             - mountPath: "/mnt/vol"
               name: mediavolume

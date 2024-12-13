@@ -1,12 +1,13 @@
 package tukano.impl;
 
 import static java.lang.String.format;
+import static tukano.api.Result.ErrorCode.*;
 import static tukano.api.Result.error;
 import static tukano.api.Result.errorOrResult;
 import static tukano.api.Result.errorOrValue;
 import static tukano.api.Result.ok;
-import static tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static tukano.api.Result.ErrorCode.FORBIDDEN;
+import static tukano.srv.Authentication.validateSession;
+
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 import java.util.List;
@@ -17,6 +18,7 @@ import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
 import utils.DB;
+import utils.Session;
 
 public class JavaUsers implements Users {
 	
@@ -42,20 +44,18 @@ public class JavaUsers implements Users {
 			return error(BAD_REQUEST);
 		}
 
-		// Insert the user into the database
 		Result<String> dbResult = errorOrValue(DB.insertOne(user), user.getUserId());
 		if (!dbResult.isOK()) {
-			return dbResult; // Return any error from the database operation
+			return dbResult;
 		}
 
-		// If cache is active, log in the user
 		if (isCacheActive) {
-//			Authentication auth = new Authentication();
-//			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
-//
-//			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-//				return error(BAD_REQUEST, "Failed to log in after user creation");
-//			}
+			Authentication auth = new Authentication();
+			Response loginResponse = auth.login(user.getUserId(), user.getPwd());
+
+			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
+				return error(BAD_REQUEST);
+			}
 		}
 
 		return ok(user.getUserId());
@@ -74,14 +74,21 @@ public class JavaUsers implements Users {
 			return error(FORBIDDEN);
 		}
 
-		// If cache is active, log in the user
 		if (isCacheActive) {
 //			Authentication auth = new Authentication();
 //			Response loginResponse = auth.login(userId, pwd);
 //
 //			if (loginResponse.getStatus() != Response.Status.SEE_OTHER.getStatusCode()) {
-//				return error(BAD_REQUEST, "Failed to log in after retrieving user");
+//				return error(BAD_REQUEST);
 //			}
+			Session response = validateSession(userId);
+			Log.info("Sessionnnnnnnnnnnnnnnnnnnnn: "+  response);
+			if (response.user().equals(dbResult.value())) {
+				ok(dbResult.value());
+
+			}
+			return  error(BAD_REQUEST);
+
 		}
 
 		return ok(dbResult.value());
@@ -128,7 +135,7 @@ public class JavaUsers implements Users {
 		return ok(hits);
 	}
 
-	
+
 	private Result<User> validatedUserOrError( Result<User> res, String pwd ) {
 		if( res.isOK())
 			return res.value().getPwd().equals( pwd ) ? res : error(FORBIDDEN);

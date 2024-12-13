@@ -29,20 +29,21 @@ public class Authentication {
 	static final String COOKIE_KEY = "scc:session";
 	static final String LOGIN_PAGE = "login.html";
 	private static final int MAX_COOKIE_AGE = 3600;
-	static final String REDIRECT_TO_AFTER_LOGIN = "/ctrl/version";
+	static final String REDIRECT_TO_AFTER_LOGIN = "/tukano-1/rest";
 	static RedisCache cache = RedisCache.getInstance();
 
 	@POST
 	public Response login(@FormParam(USER) String user, @FormParam(PWD) String password) {
 		System.out.println("user: " + user + " pwd:" + password);
-		boolean pwdOk = true; // replace with code to check user password
+		boolean pwdOk = true;
 		if (pwdOk) {
 			String uid = UUID.randomUUID().toString();
 			var cookie = new NewCookie.Builder(COOKIE_KEY)
-					.value(uid).path("/")
+					.value(uid)
+					.path("/")
 					.comment("sessionid")
 					.maxAge(MAX_COOKIE_AGE)
-					.secure(false) // ideally, it should be true to only work for https requests
+					.secure(false)
 					.httpOnly(true)
 					.build();
 
@@ -51,8 +52,9 @@ public class Authentication {
 			return Response.seeOther(URI.create(REDIRECT_TO_AFTER_LOGIN))
 					.cookie(cookie)
 					.build();
-		} else
+		} else {
 			throw new NotAuthorizedException("Incorrect login");
+		}
 	}
 
 	@GET
