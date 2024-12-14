@@ -33,7 +33,7 @@ spec:
             - name: BLOB-PATH
               value: "/mnt/vol/"
             - name: CACHE_ACTIVE
-              value: "false"
+              value: "true"
             - name: REDIS_HOST
               value: "redis-service"
 
