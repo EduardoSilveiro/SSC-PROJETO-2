@@ -1,5 +1,5 @@
 config:
-  target: http://72.144.99.190/tukano-1/rest
+  target: http://72.144.191.87/tukano-1/rest
   plugins:
     metrics-by-endpoint: {} # Used to get metrics for each endpoint individually.
   processor: ./test-utils.js
@@ -40,7 +40,7 @@ scenarios:
           url: "/shorts/{{ userId }}?pwd={{ pwd }}"
           afterResponse: "processVideoAddReply"
       - post:
-          beforeRequest: "uploadBlobBody"
+          # beforeRequest: "uploadBlobBody"
           url: "/blobs/{{ blobUrl }}"
             
 

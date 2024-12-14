@@ -17,8 +17,8 @@ module.exports = {
   getFollowDetails,
 }
 
-const SHORT_ID_FIELD = 'id';
-const USER_ID_FIELD = 'id';
+const SHORT_ID_FIELD = 'shortId';
+const USER_ID_FIELD = 'userId';
 
 var videoIds = []
 var registeredUsersMap = new Map();
@@ -48,7 +48,7 @@ function addUser(user_info) {
 
 function addTestData() {
     var basefile
-	if( fs.existsSync( '/src/tests/shorts'))
+	if( fs.existsSync( '/shorts'))
 		basefile = '/src/tests/data/users.csv'
 	else
 		basefile =  'src/tests/data/users.csv'
@@ -76,7 +76,7 @@ function randomUsername(char_limit){
 function randomPassword(pass_len){
     const skip_value = 33;
     const lim_values = 94;
-    
+
     let password = '';
     let num_chars = Math.floor(Math.random() * pass_len);
     for (let i = 0; i < pass_len; i++) {
@@ -98,7 +98,7 @@ function processRegisterReply(requestParams, response, context, ee, next) {
         pendingUsers.splice(pendingUsers.indexOf(response.body),1);
     }
     return next();
-} 
+}
 
 /**
  * Register a random user.
@@ -109,7 +109,7 @@ function uploadRandomizedUser(requestParams, context, ee, next) {
     let pword = randomPassword(15);
     let email = username + "@campus.fct.unl.pt";
     let displayName = username;
-    
+
     const user = {
         userId: username,
         pwd: pword,
@@ -119,18 +119,18 @@ function uploadRandomizedUser(requestParams, context, ee, next) {
     requestParams.body = JSON.stringify(user);
     registeredUsersMap.set('uesrname', user);
     pendingUsers.push(username);
-    
+
     return next();
-} 
+}
 
 // Loads data about shorts from disk
 function loadData() {
 	var i
 	var basefile
-	if( fs.existsSync( '/src/tests/shorts'))
-		basefile = '/src/tests/shorts/house.'
+	if( fs.existsSync( '/shorts'))
+		basefile = '/shorts/house.'
 	else
-		basefile =  'src/tests/shorts/house.'
+		basefile =  'shorts/house.'
 	for( i = 1; i <= 50 ; i++) {
         // best to not keep a bunch of files in memory.
 		//var vid  = fs.readFileSync(basefile + i + '.mpv')
@@ -144,7 +144,7 @@ loadData();
 function saveShorts() {
 	var basefile1
     var basefile2
-	if (fs.existsSync( '/src/tests/short/s'))  {
+	if (fs.existsSync( '/shorts'))  {
 		basefile1 = '/src/tests/shorts/shorts.list'
         basefile2 = '/src/tests/shorts/shorts.map'
     } else {
@@ -166,7 +166,7 @@ function saveShorts() {
 function loadShorts() {
 	var basefile1
     var basefile2
-	if( fs.existsSync( '/src/tests/shorts')) {
+	if( fs.existsSync( '/shorts')) {
 		basefile1 = '/src/tests/shorts/shorts.list'
         basefile2 = '/src/tests/shorts/shorts.map'
 	} else {
@@ -210,7 +210,7 @@ function uploadBlobBody(requestParams, context, ee, next) {
 }
 
 function processVideoAddReply(requestParams, response, context, ee, next) {
-    if( typeof response.body !== 'undefined' && response.body.length > 0) {     
+    if( typeof response.body !== 'undefined' && response.body.length > 0) {
         var short_details =  JSON.parse(response.body);
         if(SHORT_ID_FIELD == "shortId") {
             videoIds.push(short_details.shortId);
@@ -221,16 +221,16 @@ function processVideoAddReply(requestParams, response, context, ee, next) {
         }
         context.vars['blobUrl'] = short_details.blobUrl.split("/blobs/").at(-1)
         saveShorts();
-    }                                                                           
-    return next();                                                              
+    }
+    return next();
 }
 
 function processVideoGetReply(requestParams, response, context, ee, next) {
-    if( typeof response.body !== 'undefined' && response.body.length > 0) {     
+    if( typeof response.body !== 'undefined' && response.body.length > 0) {
         var short_details =  JSON.parse(response.body);
         context.vars['blobUrl'] = short_details.blobUrl.split("/blobs/").at(-1)
-    }                                                                           
-    return next();                                                              
+    }
+    return next();
 }
 
 // Helper function to get a random user.
@@ -285,6 +285,6 @@ function getShortDownloadDetails(requestParams, context, ee, next) {
     context.vars['shortId'] = short_id;
     var owner_details = registeredUsersMap.get(shortMap.get(short_id).ownerId);
     context.vars['userId'] = owner_details.userId;
-    context.vars['pwd'] = owner_details.pwd; 
+    context.vars['pwd'] = owner_details.pwd;
     return next();
 }
