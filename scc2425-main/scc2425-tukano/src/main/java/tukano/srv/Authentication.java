@@ -99,8 +99,31 @@ public class Authentication {
 	protected Result<User> okUser(String userId, String pwd) {
 		return JavaUsers.getInstance().getUser(userId, pwd);
 	}
-
+	static public Session validateAdminSession(String userId) throws NotAuthorizedException {
+		if(userId.equalsIgnoreCase("admin")) {
+			var cookies = RequestCookies.get();
+			return  validateAdminSession(cookies.get(COOKIE_KEY), userId);
+		} throw new NotAuthorizedException("Invalid permissiom ");
+	}
 	static public Session validateSession(Cookie cookie, String userId) throws NotAuthorizedException {
+
+		if (cookie == null)
+			throw new NotAuthorizedException("No session initialized");
+
+		var session = cache.getInstance().getSession(cookie.getValue());
+		if (session == null)
+			throw new NotAuthorizedException("No valid session initialized");
+
+		if (session.user() == null || session.user().length() == 0)
+			throw new NotAuthorizedException("No valid session initialized");
+
+		if (!session.user().equals(userId))
+			throw new NotAuthorizedException("Invalid user : " + session.user());
+
+		return session;
+	}
+
+	static public Session validateAdminSession(Cookie cookie, String userId) throws NotAuthorizedException {
 
 		if (cookie == null)
 			throw new NotAuthorizedException("No session initialized");

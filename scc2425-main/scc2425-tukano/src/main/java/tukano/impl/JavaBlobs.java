@@ -47,12 +47,29 @@ public class JavaBlobs implements Blobs {
 	
 	@Override
 	public Result<Void> upload(String blobId, byte[] bytes, String token ) {
-		Log.info(() -> format("upload : blobId = %s, token = %s, isCacheActive = %b\n", blobId, token ));
+		Log.info(() -> format("upload : blobId = %s, token = %s\n", blobId, token ));
 
-//		if (isCacheActive) {
-//			Authentication.validateSession();
-//
-//		}
+		if (isCacheActive) {
+
+			String userId = null;
+			try {
+				int plusIndex = blobId.indexOf('+');
+				if (plusIndex > 0) {
+					userId = blobId.substring(0, plusIndex);
+					String finalUserId = userId;
+					Log.info(() -> format("UserId: %s", finalUserId));
+				}
+		} catch (Exception e) {
+			Log.info(() -> format("Error extracting userId from blobId: %s, error: %s", blobId, e.getMessage()));
+			return error(FORBIDDEN);
+		}
+			try {
+				Authentication.validateSession(userId);
+			} catch (Exception e) {
+				Log.info(() -> format("Error validating userId from blobId: %s, error: %s", blobId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
+		}
 
 		if (!validBlobId(blobId, token)) {
 			return error(FORBIDDEN);
@@ -64,9 +81,30 @@ public class JavaBlobs implements Blobs {
 	@Override
 	public Result<byte[]> download(String blobId, String token) {
 		Log.info(() -> format("download : blobId = %s, token=%s\n", blobId, token));
+		if (isCacheActive) {
 
+			String userId = null;
+			try {
+				int plusIndex = blobId.indexOf('+');
+				if (plusIndex > 0) {
+					userId = blobId.substring(0, plusIndex);
+					String finalUserId = userId;
+					Log.info(() -> format("UserId: %s", finalUserId));
+				}
+			} catch (Exception e) {
+				Log.info(() -> format("Error extracting userId from blobId: %s, error: %s", blobId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
+			try {
+				Authentication.validateSession(userId);
+			} catch (Exception e) {
+				Log.info(() -> format("Error validating userId from blobId: %s, error: %s", blobId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
+		}
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
+		Log.info(() -> format("Path : blobId = %s\n", toPath(blobId)));
 
 		return storage.read( toPath( blobId ) );
 	}
@@ -76,7 +114,25 @@ public class JavaBlobs implements Blobs {
 		Log.info(() -> format("delete : blobId = %s, token = %s, isCacheActive = %b\n", blobId, token, isCacheActive));
 
 		if (isCacheActive) {
-			validateSession(  blobId);
+
+			String userId = null;
+			try {
+				int plusIndex = blobId.indexOf('+');
+				if (plusIndex > 0) {
+					userId = blobId.substring(0, plusIndex);
+					String finalUserId = userId;
+					Log.info(() -> format("UserId: %s", finalUserId));
+				}
+			} catch (Exception e) {
+				Log.info(() -> format("Error extracting userId from blobId: %s, error: %s", blobId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
+			try {
+				Authentication.validateSession(userId);
+			} catch (Exception e) {
+				Log.info(() -> format("Error validating userId from blobId: %s, error: %s", blobId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
 		}
 
 		if (!validBlobId(blobId, token)) {
@@ -92,7 +148,12 @@ public class JavaBlobs implements Blobs {
 		Log.info(() -> format("deleteAllBlobs : userId = %s, token = %s, isCacheActive = %b\n", userId, token, isCacheActive));
 
 		if (isCacheActive) {
-			//Session session = validateSession(sessionCookie, userId);
+			try {
+				Authentication.validateAdminSession(userId);
+			} catch (Exception e) {
+				Log.info(() -> format("Error validating userId  : %s", userId, e.getMessage()));
+				return error(FORBIDDEN);
+			}
 
 		}
 
